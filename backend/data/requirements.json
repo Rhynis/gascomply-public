@@ -1,0 +1,57 @@
+{
+  "_comment": "Human-curated requirement cluster for concept:lpg-retail-store (build plan A6 A5.6, issue #51). Every source_unit_id was located in the real ingested corpus, first by text search, then verified by reading the real unit body against the value stated here -- this file is the record of that review, not something derived automatically. Edit it as a domain expert, not as generated data: adding, correcting or removing a requirement here is the actual review act ingest/graph.py's requirement pass turns into graph edges.",
+  "concept": {
+    "slug": "lpg-retail-store",
+    "label_vi": "Cửa hàng bán lẻ LPG chai"
+  },
+  "requirements": [
+    {
+      "slug": "min-store-area",
+      "label_vi": "Diện tích tối thiểu cửa hàng",
+      "value": "≥ 12 m²",
+      "source_unit_id": "gas-decree-87-2018#dieu-53#khoan-1"
+    },
+    {
+      "slug": "ignition-distance",
+      "label_vi": "Khoảng cách an toàn tới nguồn gây cháy",
+      "value": "≥ 3 m về phía không có tường chịu lửa",
+      "source_unit_id": "gas-decree-87-2018#dieu-53#khoan-2"
+    },
+    {
+      "slug": "fire-resistance",
+      "label_vi": "Bậc chịu lửa tối thiểu của cửa hàng",
+      "value": "≥ bậc II",
+      "source_unit_id": "gas-decree-87-2018#dieu-53#khoan-2"
+    },
+    {
+      "slug": "electrical",
+      "label_vi": "Thiết bị điện của cửa hàng",
+      "value": "loại phòng nổ, cách chai LPG ≥ 1,5 m",
+      "source_unit_id": "gas-decree-87-2018#dieu-53#khoan-2"
+    },
+    {
+      "slug": "display-racks",
+      "label_vi": "Chai trưng bày trên giá quảng cáo",
+      "value": "chỉ chai không chứa LPG",
+      "source_unit_id": "gas-decree-87-2018#dieu-53#khoan-3"
+    },
+    {
+      "slug": "supply-contract",
+      "label_vi": "Hợp đồng mua bán LPG chai",
+      "value": "≥ 1 năm, với thương nhân có giấy chứng nhận đủ điều kiện còn hiệu lực",
+      "source_unit_id": "gas-decree-87-2018#dieu-10#khoan-2"
+    },
+    {
+      "slug": "licensing-time",
+      "label_vi": "Thời hạn cấp Giấy chứng nhận đủ điều kiện",
+      "value": "15 ngày làm việc kể từ ngày nhận đủ hồ sơ hợp lệ",
+      "source_unit_id": "gas-decree-87-2018#dieu-43#khoan-3"
+    },
+    {
+      "slug": "cylinder-inspection",
+      "label_vi": "Kiểm định chai LPG",
+      "value": "theo QCVN 04:2013/BCT -- kiểm định khi quá hạn hoặc chưa từng kiểm định",
+      "source_unit_id": "lpg-cylinder-qcvn-04-2013#dieu-10#khoan-1#diem-a"
+    }
+  ]
+}

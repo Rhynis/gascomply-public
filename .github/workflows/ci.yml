@@ -1,0 +1,165 @@
+name: CI
+
+# Part E of BUILD_PLAN_FOUNDATION.md: CI is the merge gate. Every job below runs
+# a command the Definition of Done (Part C9) already requires, so a green run
+# means the same thing a clean local checkout means.
+#
+# Deferred until the phase that creates the code they would check:
+#   frontend type-check / lint / build / unit tests -> Phase 5.1
+#   e2e (Playwright) + preview deploy               -> Phase 5.2
+#   migration drift                                 -> Phase 2.1
+#   eval threshold gate                             -> after Phase 4.2
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: "3.11"
+
+jobs:
+  backend:
+    name: backend
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      # Build plan A6 Phase 1.5b: a plain Postgres+pgvector service container,
+      # the same image docker-compose.yml runs locally. Supabase is a Phase
+      # 5.2 production concern only -- this is the whole database CI needs.
+      #
+      # TEST_DATABASE_URL, not DATABASE_URL (issue #64): the test suite's
+      # truncating fixture reads this variable, never the application's own
+      # DATABASE_URL setting, so nothing in this job can accidentally arm it
+      # against a real database. The container itself is named "..._test" as
+      # a second, independent signal -- the fixture's own name guard checks
+      # the database name it is about to run against, not this workflow.
+      TEST_DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/gascomply_test
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: gascomply_test
+        ports:
+          - 5432:5432
+        # A health check, not a sleep: the job's steps wait for the runner to
+        # report the container ready rather than guessing how long that takes.
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+          cache-dependency-path: backend/pyproject.toml
+
+      # Install from pyproject.toml on a clean runner: this is the only place
+      # that proves a stranger can build the project from the repository alone.
+      - name: Install
+        run: pip install -e ".[dev]"
+
+      - name: Format
+        run: ruff format --check .
+
+      - name: Lint
+        run: ruff check .
+
+      - name: Type-check
+        run: mypy app ingest
+
+      # Deliberate, one-off (Part E) -- never run from application startup.
+      # A real smoke test of the CLI entry point itself, not redundant with
+      # conftest.py's own apply_pending_migrations() call before each
+      # database test: this is what proves `python -m app.core.migrate`
+      # works end to end (argument parsing, settings resolution, the actual
+      # migration files) on a clean checkout, independent of pytest ever
+      # running. `app.core.migrate` reads the application's own DATABASE_URL
+      # setting, not TEST_DATABASE_URL, so it is given the test database
+      # explicitly here rather than inheriting a job-wide DATABASE_URL --
+      # nothing else in this job sets that variable at all (issue #64).
+      - name: Apply migrations
+        env:
+          DATABASE_URL: ${{ env.TEST_DATABASE_URL }}
+        run: python -m app.core.migrate
+
+      - name: Tests + coverage gate
+        run: pytest -q --junitxml=/tmp/pytest.xml
+
+      # A skipped test in CI is a false green: the run reports success while a whole
+      # area went unexercised, because a service container never came up or a skipif
+      # condition quietly held. Locally a skip is a convenience; here it is a failure.
+      # If a genuinely unrunnable-in-CI test ever appears, exclude it by marker rather
+      # than by weakening this check.
+      - name: No test may be skipped in CI
+        run: |
+          python - <<'PY'
+          import sys
+          import xml.etree.ElementTree as ET
+
+          suite = ET.parse("/tmp/pytest.xml").getroot().find("testsuite")
+          total, skipped = int(suite.get("tests", 0)), int(suite.get("skipped", 0))
+          print(f"{total} tests collected, {skipped} skipped")
+          if skipped:
+              for case in suite.iter("testcase"):
+                  if case.find("skipped") is not None:
+                      print(f"  SKIPPED {case.get('classname')}::{case.get('name')}")
+              sys.exit(1)
+          PY
+
+      # A fresh advisory can turn this red with no code change (Part C, "keep
+      # them patched"). Treat such a failure as pre-existing, not as a
+      # regression of whichever PR happens to be open, and bump the dependency.
+      # `pip-audit --strict` on the environment fails on this project's own
+      # editable install, which is not on PyPI and therefore cannot be audited.
+      # Freezing the third-party dependencies first keeps --strict meaningful.
+      - name: Dependency audit
+        run: |
+          pip install pip-audit==2.10.1
+          pip freeze --exclude-editable > /tmp/requirements-audit.txt
+          pip-audit --strict -r /tmp/requirements-audit.txt
+
+  secret-scan:
+    name: secret-scan
+    runs-on: ubuntu-latest
+    env:
+      # Pinned release archive rather than a marketplace action, so nothing in
+      # the pipeline resolves to a moving tag.
+      GITLEAKS_VERSION: "8.30.1"
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Install gitleaks
+        run: |
+          curl -sSfL -o gitleaks.tar.gz \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          tar -xzf gitleaks.tar.gz gitleaks
+          sudo install -m 0755 gitleaks /usr/local/bin/gitleaks
+          gitleaks version
+
+      - name: Scan the pull request diff
+        if: github.event_name == 'pull_request'
+        run: |
+          gitleaks detect --no-banner --redact --exit-code 1 \
+            --log-opts="${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}"
+
+      - name: Scan the full history
+        if: github.event_name == 'push'
+        run: gitleaks detect --no-banner --redact --exit-code 1

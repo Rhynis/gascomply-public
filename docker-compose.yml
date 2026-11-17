@@ -1,0 +1,38 @@
+# Local Postgres + pgvector for development (build plan A6 Phase 1.5b).
+#
+# Supabase is a Phase 5.2 production concern only -- development and CI use a
+# plain Postgres image with the pgvector extension pre-installed, which is
+# free and requires no account. CI uses the same image as a GitHub Actions
+# service container (see .github/workflows/ci.yml); this file is for running
+# the same thing locally.
+#
+# Usage:
+#   docker compose up -d
+#   cd backend && DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5433/gascomply python -m app.core.migrate
+#   DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5433/gascomply python -m ingest.run --corpus ../corpus
+#
+# Host port is 5433, not Postgres's default 5432: a machine that already runs
+# a native/Homebrew Postgres for other projects has that port taken, and this
+# avoids silently talking to the wrong database. Inside the Docker network
+# (and in CI, where there is no such conflict) the container's own port 5432
+# is unaffected.
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: gascomply
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres-data:

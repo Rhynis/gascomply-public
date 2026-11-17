@@ -1,0 +1,19 @@
+{
+  "documents": [
+    {
+      "id": "gas-decree-87-2018",
+      "number": "87/2018/NĐ-CP",
+      "title_vi": "Nghị định về kinh doanh khí",
+      "doc_type": "decree",
+      "issued": "2018-06-15",
+      "effective": "2018-08-01",
+      "status": "in_force",
+      "source_url": "https://vbpl.vn/",
+      "fetched": "2026-08-29",
+      "path": "corpus/gas-decree-87-2018.pdf",
+      "meta": {
+        "note": "Replacement decree not confirmed as issued (checked 2026-08-29) - re-verify."
+      }
+    }
+  ]
+}

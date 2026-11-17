@@ -1,0 +1,20 @@
+# C12 says "pin versions and keep them patched". The pip-audit --strict step in CI
+# reports a known CVE; nothing was raising the pull request that fixes it. This is
+# that missing half.
+version: 2
+updates:
+  - package-ecosystem: pip
+    directory: /backend
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      # One PR for the dev toolchain rather than five: ruff, mypy and pytest move
+      # together and are verified by the same CI run.
+      dev-tooling:
+        patterns: ["ruff", "mypy", "pytest*", "pip-audit"]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly

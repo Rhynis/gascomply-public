@@ -1,0 +1,2 @@
+ALTER TABLE units ADD COLUMN IF NOT EXISTS appendix_no int;
+ALTER TABLE units ADD COLUMN IF NOT EXISTS item_no int;

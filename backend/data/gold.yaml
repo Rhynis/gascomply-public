@@ -1,0 +1,358 @@
+# Gold evaluation set (build plan A6 Phase 4.1, issue #95).
+#
+# Schema: see eval/gold.py's own module docstring and the GoldRow/GoldCategory
+# models there -- this file is validated against that schema by
+# eval.gold.load_gold_set and by tests/test_gold.py. Summary:
+#
+#   id                : unique kebab-case slug for this row
+#   category          : compliance | multi_hop | refusal | emergency
+#   question          : Vietnamese, phrased the way a shop owner would type it
+#   reference_answer  : Vietnamese, verified against the real clause text in
+#                        the dev database (see the PR for the per-row
+#                        verification: unit id + real body text checked)
+#   source_unit_ids   : units.id values the answer is grounded in; empty for
+#                        refusal/emergency rows
+#   multi_hop         : true only for category: multi_hop rows
+#   expected_refusal  : true only for category: refusal rows
+#
+# Every source_unit_id below was read from the real, reviewed corpus
+# (docker exec gascomply-postgres-1 psql ... gascomply) before being written
+# here -- never from memory or a web summary. tests/test_gold.py asserts every
+# one of them resolves to a real row of `units` in a freshly-migrated test
+# database ingested from a fixture corpus that reproduces this exact text,
+# through the real ingest pipeline.
+#
+# Seed question 6 of BUILD_PLAN.md ("Chai gas kiem dinh theo van ban nao...
+# (TT 48/2011, QCVN 04:2013/BCT)") is wrong: SOURCES.md's 2026-09-01
+# verification log records that TT 48/2011/TT-BCT was investigated and
+# dropped -- it governs quality management of group-2 goods generally, not
+# cylinder inspection. The real source is QCVN 04:2013/BCT (issued via TT
+# 18/2013/TT-BCT). See compliance-cylinder-inspection below, and PR #95's
+# description for the correction in full.
+
+# --- compliance: single-source questions -------------------------------------------
+
+- id: compliance-min-store-area
+  category: compliance
+  question: "Mở cửa hàng gas cần diện tích tối thiểu bao nhiêu mét vuông?"
+  reference_answer: "Cửa hàng bán lẻ LPG chai phải có diện tích tối thiểu 12 m² (Nghị định 87/2018/NĐ-CP, Điều 53 Khoản 1)."
+  source_unit_ids: ["gas-decree-87-2018#dieu-53#khoan-1"]
+
+- id: compliance-ignition-distance
+  category: compliance
+  question: "Cửa hàng gas phải cách nguồn lửa, nguồn nhiệt bao xa?"
+  reference_answer: "Cửa hàng phải cách ly với các nguồn gây cháy tối thiểu 3 m về phía không có tường chịu lửa; nếu phía đó có tường chịu lửa thì không bắt buộc khoảng cách này (NĐ 87/2018, Điều 53 Khoản 2)."
+  source_unit_ids: ["gas-decree-87-2018#dieu-53#khoan-2"]
+
+- id: compliance-fire-resistance-level
+  category: compliance
+  question: "Cửa hàng bán gas phải xây bằng vật liệu chịu lửa bậc mấy?"
+  reference_answer: "Kết cấu xây dựng của cửa hàng phải đạt bậc chịu lửa tối thiểu bậc II (NĐ 87/2018, Điều 53 Khoản 2)."
+  source_unit_ids: ["gas-decree-87-2018#dieu-53#khoan-2"]
+
+- id: compliance-electrical-distance
+  category: compliance
+  question: "Thiết bị điện trong cửa hàng gas phải là loại gì, đặt cách bình gas bao xa?"
+  reference_answer: "Thiết bị điện của cửa hàng phải là loại phòng nổ (chống cháy nổ) và đặt cách chai LPG tối thiểu 1,5 m (NĐ 87/2018, Điều 53 Khoản 2)."
+  source_unit_ids: ["gas-decree-87-2018#dieu-53#khoan-2"]
+
+- id: compliance-display-racks
+  category: compliance
+  question: "Cửa hàng có được trưng bày chai gas còn khí trên giá quảng cáo không?"
+  reference_answer: "Không. Trên giá quảng cáo, cửa hàng chỉ được phép trưng bày những chai không chứa LPG, tức chai rỗng (NĐ 87/2018, Điều 53 Khoản 3)."
+  source_unit_ids: ["gas-decree-87-2018#dieu-53#khoan-3"]
+
+- id: compliance-supply-contract
+  category: compliance
+  question: "Cửa hàng gas cần ký hợp đồng mua bán với nhà cung cấp trong bao lâu?"
+  reference_answer: "Cửa hàng phải có hợp đồng mua bán LPG chai tối thiểu 1 năm với một thương nhân đang có giấy chứng nhận đủ điều kiện còn hiệu lực, trừ trường hợp cửa hàng là cửa hàng trực thuộc chính thương nhân đó (NĐ 87/2018, Điều 10 Khoản 2)."
+  source_unit_ids: ["gas-decree-87-2018#dieu-10#khoan-2"]
+
+- id: compliance-licensing-time
+  category: compliance
+  question: "Xin giấy chứng nhận đủ điều kiện kinh doanh gas mất bao lâu?"
+  reference_answer: "Trong 15 ngày làm việc kể từ ngày nhận đủ hồ sơ hợp lệ, cơ quan có thẩm quyền phải xem xét, thẩm định và cấp Giấy chứng nhận đủ điều kiện; nếu từ chối phải trả lời bằng văn bản và nêu rõ lý do (NĐ 87/2018, Điều 43 Khoản 3)."
+  source_unit_ids: ["gas-decree-87-2018#dieu-43#khoan-3"]
+
+- id: compliance-cylinder-inspection
+  category: compliance
+  question: "Chai gas phải kiểm định theo văn bản nào, khi nào phải kiểm định lại?"
+  reference_answer: "Theo QCVN 04:2013/BCT (ban hành kèm Thông tư 18/2013/TT-BCT), cửa hàng không được nạp LPG vào chai và phải đưa chai đi kiểm định lại khi: chai đã quá thời hạn kiểm định, hoặc chai chưa từng được kiểm định, hoặc không xác định được thời hạn kiểm định (QCVN 04:2013/BCT, Điều 10 Khoản 1 Điểm a)."
+  source_unit_ids: ["lpg-cylinder-qcvn-04-2013#dieu-10#khoan-1#diem-a"]
+
+- id: compliance-certificate-validity
+  category: compliance
+  question: "Giấy chứng nhận đủ điều kiện kinh doanh gas có thời hạn bao lâu?"
+  reference_answer: "Giấy chứng nhận đủ điều kiện có thời hạn hiệu lực 10 năm kể từ ngày cấp mới (NĐ 87/2018, Điều 43 Khoản 5)."
+  source_unit_ids: ["gas-decree-87-2018#dieu-43#khoan-5"]
+
+- id: compliance-blending-lab
+  category: compliance
+  question: "Muốn pha chế khí thì thương nhân cần có phòng thí nghiệm riêng không?"
+  reference_answer: "Không nhất thiết phải tự có. Thương nhân pha chế khí phải có phòng thử nghiệm chất lượng khí, hoặc có hợp đồng thuê tối thiểu 1 năm với một tổ chức đủ năng lực thử nghiệm các chỉ tiêu theo quy chuẩn kỹ thuật quốc gia (NĐ 87/2018, Điều 9 Khoản 2)."
+  source_unit_ids: ["gas-decree-87-2018#dieu-9#khoan-2"]
+
+- id: compliance-blending-registration
+  category: compliance
+  question: "Cơ sở pha chế khí có phải đăng ký với cơ quan nào không?"
+  reference_answer: "Có. Thương nhân thực hiện pha chế khí phải đăng ký cơ sở pha chế với Bộ Khoa học và Công nghệ theo quy định hiện hành (NĐ 87/2018, Điều 9 Khoản 3)."
+  source_unit_ids: ["gas-decree-87-2018#dieu-9#khoan-3"]
+
+- id: compliance-trader-establishment
+  category: compliance
+  question: "Ai được phép đứng ra kinh doanh mua bán khí gas?"
+  reference_answer: "Chỉ thương nhân được thành lập theo quy định của pháp luật mới được kinh doanh mua bán khí (NĐ 87/2018, Điều 8 Khoản 1 Điểm a)."
+  source_unit_ids: ["gas-decree-87-2018#dieu-8#khoan-1#diem-a"]
+
+- id: compliance-trader-pccc-condition
+  category: compliance
+  question: "Thương nhân mua bán khí có phải đáp ứng điều kiện phòng cháy chữa cháy không?"
+  reference_answer: "Có. Thương nhân kinh doanh mua bán khí phải đáp ứng các điều kiện về phòng cháy và chữa cháy theo quy định của pháp luật (NĐ 87/2018, Điều 8 Khoản 1 Điểm c)."
+  source_unit_ids: ["gas-decree-87-2018#dieu-8#khoan-1#diem-c"]
+
+- id: compliance-application-method
+  category: compliance
+  question: "Nộp hồ sơ xin giấy chứng nhận đủ điều kiện kinh doanh gas bằng cách nào?"
+  reference_answer: "Thương nhân gửi 1 bộ hồ sơ đề nghị cấp Giấy chứng nhận đủ điều kiện trực tiếp, qua đường bưu điện, hoặc qua mạng điện tử đến cơ quan nhà nước có thẩm quyền (NĐ 87/2018, Điều 43 Khoản 1)."
+  source_unit_ids: ["gas-decree-87-2018#dieu-43#khoan-1"]
+
+- id: compliance-station-electrical
+  category: compliance
+  question: "Thiết bị điện tại trạm cấp LPG (trạm chiết nạp) phải là loại gì?"
+  reference_answer: "Thiết bị điện sử dụng trong các vùng nguy hiểm của trạm cấp LPG phải là loại phòng nổ, có cấp nhiệt độ bề mặt phù hợp với vị trí lắp đặt và phù hợp với điện áp, tần số của lưới điện (QCVN 10:2012/BCT, Điều 14 Khoản 2 Điểm b)."
+  source_unit_ids: ["lpg-station-qcvn-10-2012#dieu-14#khoan-2#diem-b"]
+
+- id: compliance-pccc-law-effective-date
+  category: compliance
+  question: "Luật phòng cháy chữa cháy mới nhất có hiệu lực từ khi nào?"
+  reference_answer: "Luật Phòng cháy, chữa cháy và cứu nạn, cứu hộ (55/2024/QH15) có hiệu lực thi hành từ ngày 01/07/2025, trừ một điểm riêng nêu tại Khoản 4 Điều 54 (Luật 55/2024/QH15, Điều 54 Khoản 1)."
+  source_unit_ids: ["pccc-law-2024#dieu-54#khoan-1"]
+
+- id: compliance-pccc-decree-effective-date
+  category: compliance
+  question: "Nghị định hướng dẫn Luật PCCC 2024 có hiệu lực từ ngày nào?"
+  reference_answer: "Nghị định 105/2025/NĐ-CP có hiệu lực thi hành từ ngày 01/07/2025 (NĐ 105/2025, Điều 45 Khoản 1)."
+  source_unit_ids: ["pccc-decree-105-2025#dieu-45#khoan-1"]
+
+- id: compliance-old-pccc-law-repealed
+  category: compliance
+  question: "Luật phòng cháy chữa cháy năm 2001 còn hiệu lực không?"
+  reference_answer: "Không. Luật Phòng cháy và chữa cháy số 27/2001/QH10 (đã sửa đổi bởi Luật 40/2013/QH13 và Luật 30/2023/QH15) hết hiệu lực kể từ ngày Luật 55/2024/QH15 có hiệu lực thi hành, trừ trường hợp quy định tại Điều 55 của luật này (Luật 55/2024/QH15, Điều 54 Khoản 2)."
+  source_unit_ids: ["pccc-law-2024#dieu-54#khoan-2"]
+
+- id: compliance-pccc-design-appraisal-authority
+  category: compliance
+  question: "Ai là người thẩm định thiết kế, kiểm tra nghiệm thu PCCC cho cơ sở kinh doanh?"
+  reference_answer: "Lực lượng Cảnh sát phòng cháy, chữa cháy và cứu nạn, cứu hộ có nhiệm vụ thẩm định thiết kế và kiểm tra công tác nghiệm thu về phòng cháy, chữa cháy theo thẩm quyền (Luật 55/2024/QH15, Điều 41 Khoản 5)."
+  source_unit_ids: ["pccc-law-2024#dieu-41#khoan-5"]
+
+- id: compliance-pccc-fire-management-scope
+  category: compliance
+  question: "Cơ sở kinh doanh khí đốt có thuộc diện quản lý về phòng cháy, chữa cháy không?"
+  reference_answer: "Có. Cơ sở kinh doanh khí đốt (cùng nhóm với cửa hàng xăng dầu) là một trong các cơ sở thuộc diện quản lý về phòng cháy, chữa cháy, theo danh mục tại Phụ lục I kèm theo Nghị định 105/2025/NĐ-CP (NĐ 105/2025, Phụ lục I, Mục 13)."
+  source_unit_ids: ["pccc-decree-105-2025#phu-luc-1#muc-13"]
+
+- id: compliance-gas-business-premium-rate
+  category: compliance
+  question: "Tỷ lệ phí bảo hiểm cháy, nổ bắt buộc tối thiểu của cơ sở kinh doanh khí đốt là bao nhiêu?"
+  reference_answer: "Cơ sở kinh doanh khí đốt có tổng lượng khí đốt tồn chứa trên 500 kg thuộc loại N; tỷ lệ phí bảo hiểm cháy, nổ bắt buộc tối thiểu là 0,3%/năm (NĐ 105/2025, Phụ lục VI, Mục 17)."
+  source_unit_ids: ["pccc-decree-105-2025#phu-luc-6#muc-17"]
+  answer_must_match: ['0,3\s*%']
+  answer_must_not_match: ['0,35']
+
+# --- multi_hop: the answer needs more than one source unit -------------------------
+
+- id: multihop-electrical-and-display
+  category: multi_hop
+  question: "Thiết bị điện và giá trưng bày chai gas trong cửa hàng phải đáp ứng những gì?"
+  reference_answer: "Thiết bị điện của cửa hàng phải là loại phòng nổ, đặt cách chai LPG tối thiểu 1,5 m (NĐ 87/2018, Điều 53 Khoản 2). Trên giá trưng bày/quảng cáo, cửa hàng chỉ được bày những chai không chứa LPG, tức chai rỗng (NĐ 87/2018, Điều 53 Khoản 3). Cả hai yêu cầu đều áp dụng cho cùng một cửa hàng bán lẻ LPG chai (requirement cluster: req:electrical và req:display-racks đều APPLIES_TO concept:lpg-retail-store)."
+  source_unit_ids: ["gas-decree-87-2018#dieu-53#khoan-2", "gas-decree-87-2018#dieu-53#khoan-3"]
+  multi_hop: true
+
+- id: multihop-open-store-requirements
+  category: multi_hop
+  question: "Mở cửa hàng gas cần đáp ứng những điều kiện gì về diện tích, hợp đồng mua bán và thời gian cấp phép?"
+  reference_answer: "Cửa hàng phải có diện tích tối thiểu 12 m² (NĐ 87/2018, Điều 53 Khoản 1); phải có hợp đồng mua bán LPG chai tối thiểu 1 năm với một thương nhân có giấy chứng nhận đủ điều kiện còn hiệu lực (NĐ 87/2018, Điều 10 Khoản 2); và sau khi nộp đủ hồ sơ hợp lệ, cơ quan có thẩm quyền cấp Giấy chứng nhận đủ điều kiện trong 15 ngày làm việc (NĐ 87/2018, Điều 43 Khoản 3)."
+  source_unit_ids: ["gas-decree-87-2018#dieu-53#khoan-1", "gas-decree-87-2018#dieu-10#khoan-2", "gas-decree-87-2018#dieu-43#khoan-3"]
+  multi_hop: true
+
+- id: multihop-pccc-law-and-decree
+  category: multi_hop
+  question: "Luật PCCC nào đang có hiệu lực năm 2026, nghị định nào hướng dẫn chi tiết luật đó?"
+  reference_answer: "Luật Phòng cháy, chữa cháy và cứu nạn, cứu hộ (55/2024/QH15) có hiệu lực từ 01/07/2025 (Luật 55/2024/QH15, Điều 54 Khoản 1). Nghị định 105/2025/NĐ-CP, văn bản quy định chi tiết và biện pháp thi hành luật này, có hiệu lực cùng ngày 01/07/2025 (NĐ 105/2025, Điều 45 Khoản 1); trong đồ thị trích dẫn, nghị định này được ghi nhận là được hướng dẫn bởi (guided_by) chính Luật 55/2024/QH15."
+  source_unit_ids: ["pccc-law-2024#dieu-54#khoan-1", "pccc-decree-105-2025#dieu-45#khoan-1"]
+  multi_hop: true
+
+- id: multihop-pccc-decree-replaces
+  category: multi_hop
+  question: "Nghị định 105/2025 về PCCC thay thế những nghị định cũ nào?"
+  reference_answer: "Kể từ ngày 01/07/2025, Nghị định 105/2025/NĐ-CP làm hết hiệu lực một loạt nghị định PCCC trước đó (NĐ 105/2025, Điều 45 Khoản 2), trong đó có Nghị định 83/2017/NĐ-CP quy định về công tác cứu nạn, cứu hộ của lực lượng phòng cháy và chữa cháy (Điều 45 Khoản 2 Điểm a) và Nghị định 136/2020/NĐ-CP quy định chi tiết một số điều và biện pháp thi hành Luật Phòng cháy và chữa cháy trước đây (Điều 45 Khoản 2 Điểm b), cùng một số nghị định khác được liệt kê tại cùng Điều 45 Khoản 2."
+  source_unit_ids: ["pccc-decree-105-2025#dieu-45#khoan-2", "pccc-decree-105-2025#dieu-45#khoan-2#diem-a", "pccc-decree-105-2025#dieu-45#khoan-2#diem-b"]
+  multi_hop: true
+
+- id: multihop-decree-87-amended
+  category: multi_hop
+  question: "Nghị định 87/2018 về kinh doanh khí còn hiệu lực không, có bị sửa đổi bởi văn bản nào không?"
+  reference_answer: "Nghị định 87/2018/NĐ-CP (ban hành 15/6/2018, về kinh doanh khí) vẫn còn hiệu lực -- chưa có nghị định thay thế toàn bộ. Tuy nhiên nghị định này đã được sửa đổi, bổ sung một số điều bởi Nghị định 17/2020/NĐ-CP, cụ thể tại Điều 15 của NĐ 17/2020 (NĐ 17/2020, Điều 15). Quy định về diện tích tối thiểu 12 m² của cửa hàng bán lẻ tại Điều 53 Khoản 1 của NĐ 87/2018 không nằm trong phần bị Điều 15 NĐ 17/2020 sửa đổi, nên vẫn áp dụng nguyên văn."
+  source_unit_ids: ["gas-decree-17-2020#dieu-15", "gas-decree-87-2018#dieu-53#khoan-1"]
+  multi_hop: true
+
+- id: multihop-tank-condition-amended
+  category: multi_hop
+  question: "Điều kiện về bồn chứa khí hoặc chai LPG đối với thương nhân mua bán khí hiện nay là gì?"
+  reference_answer: "Theo bản gốc NĐ 87/2018 (Điều 8 Khoản 1 Điểm b), thương nhân phải có bồn chứa khí đáp ứng quy định về an toàn, hoặc có chai LPG đủ điều kiện lưu thông trên thị trường, hoặc có hợp đồng thuê bồn/chai LPG. Quy định này đã được Nghị định 17/2020/NĐ-CP sửa đổi: hiện nay chỉ cần có bồn chứa khí hoặc hợp đồng thuê bồn chứa khí, hoặc có chai LPG hoặc hợp đồng thuê chai LPG, kèm bản sao Giấy chứng nhận kiểm định chai LPG còn hiệu lực và Giấy chứng nhận hợp quy đối với chai LPG (NĐ 17/2020, Điều 15 Khoản 2)."
+  source_unit_ids: ["gas-decree-87-2018#dieu-8#khoan-1#diem-b", "gas-decree-17-2020#dieu-15#khoan-2"]
+  multi_hop: true
+
+- id: multihop-display-and-inspection
+  category: multi_hop
+  question: "Chai gas trưng bày ngoài cửa hàng và chai đã quá hạn kiểm định thì xử lý thế nào?"
+  reference_answer: "Trên giá trưng bày/quảng cáo, cửa hàng chỉ được phép bày những chai không chứa LPG, tức chai rỗng (NĐ 87/2018, Điều 53 Khoản 3). Riêng về kiểm định: một chai đã quá thời hạn kiểm định, hoặc chưa từng được kiểm định, hoặc không xác định được thời hạn kiểm định thì không được nạp LPG vào chai và phải đưa đi kiểm định lại (QCVN 04:2013/BCT, Điều 10 Khoản 1 Điểm a)."
+  source_unit_ids: ["gas-decree-87-2018#dieu-53#khoan-3", "lpg-cylinder-qcvn-04-2013#dieu-10#khoan-1#diem-a"]
+  multi_hop: true
+
+- id: multihop-gas-store-fire-insurance
+  category: multi_hop
+  question: "Cửa hàng kinh doanh gas có phải mua bảo hiểm cháy, nổ bắt buộc không?"
+  reference_answer: "Cơ sở thuộc danh mục tại Phụ lục VII kèm theo Nghị định 105/2025/NĐ-CP phải mua bảo hiểm cháy, nổ bắt buộc đối với tài sản của cơ sở (NĐ 105/2025, Điều 35 Khoản 1). Danh mục đó xác định ngưỡng theo lượng tồn chứa: cơ sở kinh doanh khí đốt chỉ thuộc diện này khi tổng lượng khí đốt tồn chứa trên 500 kg (NĐ 105/2025, Phụ lục VII, Mục 15); dưới ngưỡng đó, nghị định chỉ khuyến khích, không bắt buộc."
+  source_unit_ids: ["pccc-decree-105-2025#dieu-35#khoan-1", "pccc-decree-105-2025#phu-luc-7#muc-15"]
+  multi_hop: true
+  answer_must_match: ['500\s*kg']
+
+- id: multihop-gas-business-deductible
+  category: multi_hop
+  question: "Cơ sở kinh doanh khí đốt chịu mức khấu trừ bảo hiểm cháy, nổ tối đa bao nhiêu?"
+  reference_answer: "Cơ sở kinh doanh khí đốt có tổng lượng khí đốt tồn chứa trên 500 kg thuộc loại N (NĐ 105/2025, Phụ lục VI, Mục 17). Đối với cơ sở thuộc loại N, mức khấu trừ bảo hiểm tối đa là 10% số tiền bảo hiểm, không thấp hơn mức khấu trừ bảo hiểm tối thiểu quy định tại điểm c khoản này (NĐ 105/2025, Phụ lục VI, Mục II Khoản 1 Điểm b)."
+  source_unit_ids: ["pccc-decree-105-2025#phu-luc-6#muc-17", "pccc-decree-105-2025#phu-luc-6#muc-ii#khoan-1#diem-b"]
+  multi_hop: true
+  answer_must_match: ['10\s*%']
+  answer_must_not_match: ['(?<![\d,])1\s*%']
+
+- id: multihop-gas-store-300kg-insurance
+  category: multi_hop
+  question: "Cửa hàng gas chứa 300 kg khí có phải mua bảo hiểm cháy, nổ bắt buộc không?"
+  reference_answer: "Không bắt buộc. Cơ sở kinh doanh khí đốt chỉ thuộc danh mục phải mua bảo hiểm cháy, nổ bắt buộc khi tổng lượng khí đốt tồn chứa trên 500 kg (NĐ 105/2025, Phụ lục VII, Mục 15). 300 kg dưới ngưỡng đó, nên nghị định chỉ khuyến khích cơ sở mua (NĐ 105/2025, Điều 35 Khoản 1)."
+  source_unit_ids: ["pccc-decree-105-2025#dieu-35#khoan-1", "pccc-decree-105-2025#phu-luc-7#muc-15"]
+  multi_hop: true
+  answer_must_match: ['không\s+(?:bắt buộc|phải mua|thuộc\s+(?:diện|danh mục)\b[^.;]{0,40}?phải mua)', '500\s*kg']
+  answer_must_not_match: ['^\s*có\b', 'xăng dầu']
+
+- id: multihop-gas-store-500kg-insurance
+  category: multi_hop
+  question: "Cửa hàng gas chứa 500 kg khí có phải mua bảo hiểm cháy, nổ bắt buộc không?"
+  reference_answer: "Không bắt buộc. Cơ sở kinh doanh khí đốt chỉ thuộc danh mục phải mua bảo hiểm cháy, nổ bắt buộc khi tổng lượng khí đốt tồn chứa trên 500 kg (NĐ 105/2025, Phụ lục VII, Mục 15). 500 kg bằng ngưỡng chứ không vượt ngưỡng đó, nên nghị định chỉ khuyến khích cơ sở mua (NĐ 105/2025, Điều 35 Khoản 1)."
+  source_unit_ids: ["pccc-decree-105-2025#dieu-35#khoan-1", "pccc-decree-105-2025#phu-luc-7#muc-15"]
+  multi_hop: true
+  answer_must_match: ['không\s+(?:bắt buộc|phải mua|thuộc\s+(?:diện|danh mục)\b[^.;]{0,40}?phải mua)', '500\s*kg']
+  answer_must_not_match: ['^\s*có\b', 'xăng dầu']
+
+- id: multihop-gas-store-800kg-insurance
+  category: multi_hop
+  question: "Cửa hàng gas chứa 800 kg khí có phải mua bảo hiểm cháy, nổ bắt buộc không?"
+  reference_answer: "Có. Cơ sở kinh doanh khí đốt có tổng lượng khí đốt tồn chứa trên 500 kg thuộc danh mục phải mua bảo hiểm cháy, nổ bắt buộc (NĐ 105/2025, Phụ lục VII, Mục 15), và cơ sở thuộc danh mục đó phải mua bảo hiểm cháy, nổ bắt buộc đối với tài sản của cơ sở (NĐ 105/2025, Điều 35 Khoản 1). 800 kg vượt ngưỡng đó."
+  source_unit_ids: ["pccc-decree-105-2025#dieu-35#khoan-1", "pccc-decree-105-2025#phu-luc-7#muc-15"]
+  multi_hop: true
+  answer_must_match: ['500\s*kg']
+  answer_must_not_match: ['không\s+(?:bắt buộc|phải mua)', 'xăng dầu']
+
+- id: multihop-gas-shop-insurance-threshold
+  category: multi_hop
+  question: "Cửa hàng bán gas có bắt buộc mua bảo hiểm cháy, nổ không?"
+  reference_answer: "Chỉ khi tổng lượng khí đốt tồn chứa trên 500 kg: khi đó cửa hàng thuộc danh mục phải mua bảo hiểm cháy, nổ bắt buộc (NĐ 105/2025, Phụ lục VII, Mục 15; Điều 35 Khoản 1). Dưới ngưỡng đó, nghị định chỉ khuyến khích mua."
+  source_unit_ids: ["pccc-decree-105-2025#dieu-35#khoan-1", "pccc-decree-105-2025#phu-luc-7#muc-15"]
+  multi_hop: true
+  answer_must_match: ['500\s*kg']
+  answer_must_not_match: ['xăng dầu']
+
+# --- refusal: a correct system must refuse these --------------------------------
+
+- id: refusal-tcvn-ventilation
+  category: refusal
+  question: "Cửa hàng bán lẻ gas phải có hệ thống thông gió tự nhiên tối thiểu bao nhiêu m²?"
+  reference_answer: "Không tìm thấy quy định phù hợp trong dữ liệu hiện có. Yêu cầu chi tiết về thông gió cho cửa hàng LPG chai thuộc TCVN 6223:2017, một tiêu chuẩn có bản quyền chưa được số hóa vào hệ thống này; vui lòng tra cứu bản mua chính thức từ VSQI hoặc kiểm tra bản hiệu lực mới nhất trên vbpl.vn."
+  source_unit_ids: []
+  expected_refusal: true
+
+- id: refusal-qcvn08-2019-composition
+  category: refusal
+  question: "LPG thương phẩm bán ra thị trường phải đạt hàm lượng lưu huỳnh, áp suất hơi tối đa bao nhiêu theo quy chuẩn sản phẩm?"
+  reference_answer: "Không tìm thấy quy định phù hợp trong dữ liệu hiện có. Chỉ tiêu chất lượng sản phẩm LPG thương phẩm (như hàm lượng lưu huỳnh, áp suất hơi) thuộc QCVN 08:2019/BKHCN, văn bản đã có trong danh mục corpus nhưng chưa được tải nội dung; vui lòng kiểm tra bản hiệu lực mới nhất trên vbpl.vn."
+  source_unit_ids: []
+  expected_refusal: true
+
+- id: refusal-qcvn08-2012-historical
+  category: refusal
+  question: "Trước năm 2020, quy chuẩn QCVN 08:2012/BKHCN quy định gì về chất lượng LPG?"
+  reference_answer: "Không tìm thấy quy định phù hợp trong dữ liệu hiện có. QCVN 08:2012/BKHCN đã hết hiệu lực từ 01/01/2020 (thay thế bởi QCVN 08:2019/BKHCN) và nội dung của nó chưa được số hóa vào hệ thống này -- chỉ có một bản ghi metadata để giữ liên kết văn bản thay thế, không có toàn văn; vui lòng tra cứu bản lưu trữ trên vbpl.vn nếu cần đối chiếu lịch sử."
+  source_unit_ids: []
+  expected_refusal: true
+
+- id: refusal-tt-41-2011-status
+  category: refusal
+  question: "Thông tư 41/2011/TT-BCT về quản lý an toàn khí LPG hiện còn áp dụng không, quy định cụ thể ra sao?"
+  reference_answer: "Không tìm thấy quy định phù hợp trong dữ liệu hiện có. Thông tư 41/2011/TT-BCT chỉ được biết đến qua một trích dẫn trong corpus, không có toàn văn được tải, và hiệu lực hiện tại của nó chưa được xác nhận; vui lòng kiểm tra bản hiệu lực mới nhất trên vbpl.vn."
+  source_unit_ids: []
+  expected_refusal: true
+
+- id: refusal-income-tax-out-of-domain
+  category: refusal
+  question: "Bán lại cửa hàng gas thì phải đóng thuế thu nhập cá nhân bao nhiêu phần trăm?"
+  reference_answer: "Không tìm thấy quy định phù hợp trong dữ liệu hiện có. Thuế thu nhập cá nhân khi chuyển nhượng cơ sở kinh doanh nằm ngoài phạm vi corpus này (kinh doanh khí LPG và phòng cháy chữa cháy); vui lòng tham khảo pháp luật về thuế hoặc cơ quan thuế địa phương."
+  source_unit_ids: []
+  expected_refusal: true
+
+# --- emergency: phrasings app.services.safety must catch before any LLM call ----
+#
+# Every question below is copied verbatim from tests/test_safety.py's own
+# phrase tuples (issue #91) -- not invented here. reference_answer is the
+# exact EMERGENCY_RESPONSE_VI constant from app/services/safety.py, via a YAML
+# anchor so it is written once; tests/test_gold.py asserts byte-equality
+# against the real constant, so the two can never silently drift apart.
+
+- id: emergency-smell-accented
+  category: emergency
+  question: "ngửi thấy mùi gas"
+  reference_answer: &emergency_response |-
+    KHẨN CẤP: ra khỏi nơi này ngay và gọi 114.
+
+    1. Ra khỏi nhà hoặc khu vực ngay.
+    2. Nếu còn an toàn, đóng van bình gas.
+    3. Không dùng lửa, không bật hoặc tắt công tắc điện.
+    4. Gọi 114 (Cảnh sát PCCC và CNCH).
+  source_unit_ids: []
+
+- id: emergency-smell-unaccented
+  category: emergency
+  question: "ngui thay mui gas"
+  reference_answer: *emergency_response
+  source_unit_ids: []
+
+- id: emergency-leak-accented
+  category: emergency
+  question: "rò gas"
+  reference_answer: *emergency_response
+  source_unit_ids: []
+
+- id: emergency-leak-unaccented
+  category: emergency
+  question: "ro gas"
+  reference_answer: *emergency_response
+  source_unit_ids: []
+
+- id: emergency-fire
+  category: emergency
+  question: "cháy nhà"
+  reference_answer: *emergency_response
+  source_unit_ids: []
+
+- id: emergency-explosion
+  category: emergency
+  question: "nổ bình gas"
+  reference_answer: *emergency_response
+  source_unit_ids: []
+
+- id: emergency-as-question
+  category: emergency
+  question: "bình gas nhà tôi đang rò, tôi phải làm sao?"
+  reference_answer: *emergency_response
+  source_unit_ids: []

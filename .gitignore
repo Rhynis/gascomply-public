@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Environment
+.env
+.env.local
+
+# Legal corpus: source documents are downloaded locally, never committed.
+# Only the machine-readable index is tracked.
+corpus/*
+!corpus/manifest.json
+!corpus/.gitkeep
+
+# ingest/run.py output (Phase 1.6): draft rows for human/graph review, not source
+backend/references.csv
+
+# Planning documents: owner-local by design (WORKFLOW.md), and they carry career
+# strategy that has no business in a public repository. The public-facing story
+# lives in README.md and SOURCES.md.
+BUILD_PLAN.md
+BUILD_PLAN_FOUNDATION.md
+ISSUE_01.md
+
+# Worktrees live inside the repository, not beside it: ~/Projects holds one
+# directory per repository, and a worktree is a second working copy of THIS one.
+.worktrees/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+
+# Personal build-plan foundation (IP — keep local, not committed)
+BUILD_PLAN_FOUNDATION.md

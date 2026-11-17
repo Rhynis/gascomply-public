@@ -1,0 +1,26 @@
+-- Build plan A5.3 prints an ivfflat index on chunks.embedding. This migration
+-- reverses that decision. Full reasoning, alternatives considered, and the
+-- threshold for reintroducing it: docs/adr/0001-drop-ivfflat-index.md.
+-- Summarized here so the next person reading this file does not have to go
+-- hunting for why the code disagrees with the plan (A6 issue #49).
+--
+-- Measured on the real corpus (692 chunks, real bge-m3 embeddings): pgvector's
+-- own sizing guidance is lists ~= rows/1000. At 692 rows, lists=100 packs
+-- ~7 vectors per list, and the default ivfflat.probes=1 searches exactly one
+-- of them. A hand-typed query against the real corpus returned the wrong top
+-- hit -- an unrelated cited standard instead of the one article that actually
+-- answers the question -- with no error and no warning. Even probes=10
+-- (~70 chunks read) still returned the wrong answer; only an exact sequential
+-- scan found the correct one.
+--
+-- The cost of exact search at this size is negligible: EXPLAIN ANALYZE on the
+-- same real query vector measured 6.545ms for an exact sequential scan vs
+-- 0.806ms for the ivfflat plan it replaces -- under six milliseconds, in a
+-- system where one LLM call takes seconds. An approximate index is a scaling
+-- tool this table does not need yet, and lists=100 was sized for a corpus
+-- that did not exist when A5.3 was written, not for the one that exists now.
+--
+-- Applied by `python -m app.core.migrate`, never automatically on application
+-- boot (BUILD_PLAN_FOUNDATION.md Part E).
+
+DROP INDEX IF EXISTS chunks_embedding_ivfflat;

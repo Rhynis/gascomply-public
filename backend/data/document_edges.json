@@ -1,0 +1,35 @@
+{
+  "_comment": "Human-curated document-level edges (build plan A6, issue #63), mirroring requirements.json. Every src_id/dst_id is a manifest document id, checked against EdgeType's own docstring in app/schemas/edge.py before being written here -- direction is not copied from SOURCES.md on trust. Kept separate from what regex extraction can produce: these are edges whose only source is knowing the corpus, not text on disk -- lpg-qcvn-08-2012's replaced_by edge above all, since both QCVN 08 endpoints are acquired:false (#62) and no text anywhere states the repeal. Editing this file is the review act; ingest/graph.py's document-edge pass turns it into graph edges, still landing review_status=pending like every other non-structural edge (issue #53's own rule).",
+  "edges": [
+    {
+      "src_id": "pccc-decree-105-2025",
+      "dst_id": "pccc-law-2024",
+      "edge_type": "guided_by",
+      "note": "NĐ 105/2025 Điều 1: quy định chi tiết một số điều và biện pháp thi hành Luật Phòng cháy, chữa cháy và cứu nạn, cứu hộ (55/2024/QH15)."
+    },
+    {
+      "src_id": "pccc-circular-36-2025",
+      "dst_id": "pccc-law-2024",
+      "edge_type": "guided_by",
+      "note": "TT 36/2025/TT-BCA: quy định chi tiết một số điều của Luật Phòng cháy, chữa cháy và cứu nạn, cứu hộ."
+    },
+    {
+      "src_id": "pccc-circular-36-2025",
+      "dst_id": "pccc-decree-105-2025",
+      "edge_type": "guided_by",
+      "note": "TT 36/2025/TT-BCA: quy định chi tiết một số điều của Nghị định số 105/2025/NĐ-CP."
+    },
+    {
+      "src_id": "gas-decree-87-2018",
+      "dst_id": "gas-decree-17-2020",
+      "edge_type": "amended_by",
+      "note": "NĐ 17/2020 sửa đổi, bổ sung một số điều của các nghị định về điều kiện đầu tư kinh doanh thuộc quản lý của Bộ Công Thương, gồm NĐ 87/2018."
+    },
+    {
+      "src_id": "lpg-qcvn-08-2012",
+      "dst_id": "lpg-qcvn-08-2019",
+      "edge_type": "replaced_by",
+      "note": "QCVN 08:2019/BKHCN replaces QCVN 08:2012/BKHCN, effective 2020-01-01 (SOURCES.md). Neither document is acquired -- no text on disk states this; kept as the one edge that gives the expired 08:2012 node its history meaning."
+    }
+  ]
+}
