@@ -20,7 +20,7 @@ dependencies = [
     # zero extraction drift measured over the full corpus (same method as #153) --
     # no further code change needed. Upgrade again only with the same
     # byte-identical-modulo-whitespace extraction check over every corpus PDF.
-    "pypdf==6.21.4",
+    "pypdf==7.1.0",
     "sqlalchemy[asyncio]>=2.0.52",
     "asyncpg>=0.31.0",
     "pgvector>=0.5.0",
